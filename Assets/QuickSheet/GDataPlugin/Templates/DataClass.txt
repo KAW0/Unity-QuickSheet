@@ -6,7 +6,9 @@ using System.Collections;
 /// !!! DO NOT CHANGE Tabs to Spaces !!!
 ///
 [System.Serializable]
-public class $ClassName
+public class $ClassName:ScriptableObject, IKeyable
 {
 	$MemberFields
+	
+
 }

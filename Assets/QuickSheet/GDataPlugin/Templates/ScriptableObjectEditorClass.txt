@@ -3,7 +3,7 @@ using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-
+using System.Linq;
 using GDataDB;
 using GDataDB.Linq;
 
@@ -26,20 +26,47 @@ public class $ClassName : BaseGoogleEditor<$WorkSheetClassName>
         
         List<$DataClassName> myDataList = new List<$DataClassName>();
         
-        var all = table.FindAll();
-        foreach(var elem in all)
+       var all = table.FindAll().Where(x => x != null);
+        ///////
+        foreach (var elem in  all)
         {
-            $DataClassName data = new $DataClassName();
-            
-            data = Cloner.DeepCopy<$DataClassName>(elem.Element);
-            myDataList.Add(data);
+            if (typeof(IKeyable).IsAssignableFrom(typeof($DataClassName)))
+            {
+                var z = targetData.dataArray.Where(x => x != null).FirstOrDefault(x => x.Key == elem.Element.Key);   
+                if (z != null)
+                {
+                    elem.Element.CopyPropertiesTo(z);
+                    z.name = elem.Element.Key;
+                    myDataList.Add(z);
+                }
+                else
+                {   $DataClassName data;
+                    data = Cloner.DeepCopy<$DataClassName>(elem.Element);
+                    data.name = elem.Element.Key;
+                    AssetDatabase.AddObjectToAsset(data, targetData);
+                    myDataList.Add(data);
+                }
+            }
+
         }
+        foreach (var item in targetData.GetSubObjectsOfTypeAsType<$DataClassName, $DataClassName>())
+        {
+            if (!myDataList.Any(x => x.Key == item.Key))
+            {
+                DestroyImmediate(item,true);
+            }
+        }
+       foreach (var item in targetData.GetSubObjectsOfTypeAsType<$DataClassName, $DataClassName>().GetRepaeted(x => x.Key))
+        {
+            DestroyImmediate(item, true);
+        }     
                 
         targetData.dataArray = myDataList.ToArray();
         
         EditorUtility.SetDirty(targetData);
         AssetDatabase.SaveAssets();
         
-        return true;
+
+        return true; 
     }
 }
